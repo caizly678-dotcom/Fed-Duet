@@ -21,14 +21,14 @@ compress: False
 
 batch_size: 16
 increment: ${initial_increment}
-initial_increment: 20
+initial_increment: 10
 scenario: "class"
 dataset: "cifar100"
 class_num: 100
-lr: 3e-5
+lr: 3e-4
 
 
-method: "CIFAR_100_10Prompt_Pool_FLOPS_Incremental_20_no_compress_sta_01_cross_10_client_5"
+method: "CIFAR_100_FedDuet_Incremental_10"
 use_FedDuet: True
 
 federated: True

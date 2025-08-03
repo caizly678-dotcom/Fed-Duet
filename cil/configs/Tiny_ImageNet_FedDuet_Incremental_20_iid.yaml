@@ -23,12 +23,12 @@ batch_size: 16
 increment: ${initial_increment}
 initial_increment: 20
 scenario: "class"
-dataset: "cifar100"
-class_num: 100
-lr: 3e-5
+dataset: "tinyimagenet"
+class_num: 200
+lr: 3e-4
 
 
-method: "CIFAR_100_10Prompt_Pool_FLOPS_Incremental_20_no_compress_sta_01_cross_10_client_5"
+method: "Tiny_ImageNet_FedDuet_Incremental_20_iid"
 use_FedDuet: True
 
 federated: True

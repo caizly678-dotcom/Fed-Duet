@@ -1,7 +1,5 @@
 # FedDuet: A Dual-channel Expert-orchestrated Framework for Federated Continual Learning
 
-[![Paper-ARXIV-Version](https://img.shields.io/badge/Paper-ARXIV-b31b1b.svg)](https://arxiv.org/abs/YOUR_PAPER_ID) <!-- TODO: Add your paper link -->
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) <!-- TODO: Choose and confirm license -->
 
 This is the official PyTorch implementation for the paper **"FedDuet: A Dual-channel Expert-orchestrated Framework for Federated Continual Learning in Vision-Language Models"**.
 
@@ -87,7 +85,7 @@ bash cil/run.sh
 
 ### Customizing Runs
 
-You can customize experiments by modifying the configuration files located in `cil/configs/708/FedDuet/`. For example, you can change:
+You can customize experiments by modifying the configuration files located in `configs`. For example, you can change:
 - The dataset (`dataset`)
 - The number of clients (`num_clients`)
 - The number of communication rounds (`com`)
@@ -95,23 +93,3 @@ You can customize experiments by modifying the configuration files located in `c
 
 The `run.sh` script is pre-configured to run multiple experiments. You can uncomment or modify the desired configuration paths and names within the script to reproduce specific results from our paper.
 
-## Citation
-
-If you find our work useful in your research, please consider citing our paper:
-
-```bibtex
-@article{your_name_2024_fedduet,
-  title={FedDuet: A Dual-channel Expert-orchestrated Framework for Federated Continual Learning in Vision-Language Models},
-  author={Your Name and Co-authors},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2024}
-}
-```
-
-<!-- TODO: Update with your official BibTeX entry -->
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
-<!-- TODO: Confirm the license choice and add a LICENSE file. --> 

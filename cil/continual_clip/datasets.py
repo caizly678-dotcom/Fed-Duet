@@ -40,9 +40,7 @@ def get_dataset(cfg, is_train, transforms=None):
             data_path=data_path, 
             download=True,
             train=is_train, 
-            #transforms=transforms
-            #如果下载了数据集，那么就不需要再次下载
-            #路径为/home/chenjunwei/Work/MoE-CL/data/cifar-100-python
+            
         )
         classes_names = dataset.dataset.classes
     elif cfg.dataset == "cifar10":
