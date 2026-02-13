@@ -1,6 +1,6 @@
 hydra:
   run:
-    dir: ./experiments/708/FedDuet/${scenario}/${dataset}_${initial_increment}-${increment}-${method}-${com}-iid
+    dir: ./experiments/FedDuet/${scenario}/${dataset}_${initial_increment}-${increment}-${method}-${com}-iid
   job:
     chdir: true
 
@@ -38,30 +38,13 @@ com : 10
 client_epochs : 1
 use_MoE_Adapters : True
 fp16: True
-# 混合精度训练
 mixed_precision: fp16
 
-
-# 设备配置
-device: "cuda"  # 使用的设备类型
-gpu: 1  # 使用的GPU编号
-seed: 42  # 随机种子
-
+device: "cuda"
+gpu: 1
+seed: 42
 
 num_experts : 8
 n_shared_experts: 1
 top_k : 2
-dropout: 0.1
-ffn_num : 64
-adapter_scalar: 0.3
-
-#辅助损失相关配置
-use_auxiliary_loss: True
-alpha_local: 0
-alpha_global: 0
-alpha_load: 0
-
-cross_modal_weight: 10
-stability_weight: 0.1
-
 use_mlp: True

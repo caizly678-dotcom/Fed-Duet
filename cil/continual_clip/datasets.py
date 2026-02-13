@@ -66,7 +66,7 @@ def get_dataset(cfg, is_train, transforms=None):
         dataset = ImageNet100(
             data_path, 
             train=is_train,
-            data_subset=os.path.join('/home/dhw/yjz_workspace/project1_y/CIL_ours_compare_v3_lr_5e_3_1router_l2/Continual-CLIP/dataset_reqs/imagenet100_splits', "train_100.txt" if is_train else "val_100.txt")
+            data_subset=os.path.join('your_data_path', "train_100.txt" if is_train else "val_100.txt")
         )
         classes_names = get_dataset_class_names(cfg.workdir, cfg.dataset)
 

@@ -428,115 +428,7 @@ def convert_weights(model: nn.Module):
 
     model.apply(_convert_weights_to_fp16)
 
-class PrologueWrapper(nn.Module):
-    def __init__(self, module, prologue):
-        super().__init__()
-        self.module = module
-        self.prologue = prologue
 
-    def forward(self, *args, **kwargs):
-        output = self.module(*args, **kwargs)
-        if isinstance(output, tuple):
-            x = output[0]
-        else:
-            x = output
-        if self.prologue is not None:
-            x = self.prologue(x)
-        if isinstance(output, tuple):
-            output = (x,) + output[1:]
-        else:
-            output = x
-        return output
-
-def add_prologue(module, prologue):
-    return PrologueWrapper(module, prologue)
-
-class EpilogueWrapper(nn.Module):
-    def __init__(self, module, epilogue):
-        super().__init__()
-        self.module = module
-        self.epilogue = epilogue
-
-    def forward(self, *args,**kwargs):
-        output = self.module(*args, **kwargs)
-        if isinstance(output, tuple):
-            x = output[0]
-        else:
-            x = output
-        if self.epilogue is not None:
-            x = self.epilogue(x)
-        if isinstance(output, tuple):
-            output = (x,) + output[1:]
-        else:
-            output = x
-        return output
-
-def add_epilogue(module, epilogue):
-    return EpilogueWrapper(module, epilogue)
-def compress_clip_model(model, drop_visual_layers, drop_transformer_layers):
-    """
-    压缩给定的 CLIP 模型，对模型的 visual 和 transformer 部分分别进行丢层操作。
-    参数:
-    - model: 预训练的 CLIP 模型
-    - drop_visual_layers: 要从 visual 模块中丢弃的层索引列表
-    - drop_transformer_layers: 要从 transformer 模块中丢弃的层索引列表
-    返回:
-    - 压缩后的 CLIP 模型
-    """
-    # 处理 visual 部分
-    # 创建教师模型的深拷贝，保持完整
-    #teacher_model = copy.deepcopy(model)
-    #teacher_model.eval()  # 设置为评估模式
-
-    model_dtype = next(model.parameters()).dtype  # 获取模型的数据类型
-    if isinstance(model.visual, VisionTransformer):
-        visual_layers = list(model.visual.transformer.resblocks)
-        print("len of visual_layers", len(visual_layers))
-
-        # Adapter
-        visual_adapters = visual_layers[:2] + visual_layers[-2:]
-        # 教师层，丢弃Adapter
-        teacher_visual_layers = visual_layers[2:10]
-
-        # drop_visual_layers = [1, 3, 5, 7]
-        student_visual_layers = [layer for i, layer in enumerate(visual_layers[2:10]) if i not in drop_visual_layers]
-        print("len of student_visual_layers", len(student_visual_layers))
-
-
-        # 转换数据类型
-        student_visual_layers = [layer.to(model_dtype) for layer in student_visual_layers]
-
-
-        # 处理 transformer 部分
-        transformer_layers = list(model.transformer.resblocks)
-        # Adapter
-        transformer_adapters = transformer_layers[:2] + transformer_layers[-2:]
-        # Teacher:
-        teacher_transformer_layers = transformer_layers[2:10]
-        student_transformer_layers = [layer for i, layer in enumerate(transformer_layers[2:10]) if
-                                      i not in drop_transformer_layers]
-        print("len of student_transformer_layers", len(student_transformer_layers))
-
-        student_transformer_layers = [layer.to(model_dtype) for layer in student_transformer_layers]
-
-
-
-
-
-        student_visual_emulator_and_adapter = visual_layers[:2] + student_visual_layers + visual_layers[-2:]
-        student_transformer_emulator_and_adapter = transformer_layers[:2] + student_transformer_layers + transformer_layers[-2:]
-
-        model.transformer.resblocks = nn.Sequential(*student_transformer_emulator_and_adapter)
-        # 转换数据类型
-        model.transformer.resblocks = model.transformer.resblocks.to(model_dtype)
-        # 重新构建 visual 的 transformer
-        model.visual.transformer.resblocks = nn.Sequential(*student_visual_emulator_and_adapter)
-        # 转换数据类型
-        model.visual.transformer.resblocks = model.visual.transformer.resblocks.to(model_dtype)
-
-        # print("offsite-tuning-CLIP model compressed",model)
-
-        return model#, teacher_model
 def build_openai_model(state_dict: dict,compress=True):
     vit = "visual.proj" in state_dict
 
@@ -575,12 +467,5 @@ def build_openai_model(state_dict: dict,compress=True):
     convert_weights(model)
     model.load_state_dict(state_dict)
 
-    if compress:
-        student_model = compress_clip_model(model, [1, 3, 5, 7], [1, 3, 5, 7])
-        print("openai clip model compressed")
-        state_dict = torch.load("/home/chenjunwei/Work/CoOp/distill/cc3m/distilled_vit_b16_clip_cc3m_epoch_3.pth")
-        student_model.load_state_dict(state_dict, strict=False)
-        student_model.float()
-        return student_model.eval()
-    else:
-        return model.eval()
+
+    return model.eval()

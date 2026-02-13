@@ -1,36 +1,10 @@
-"""Prompt Pool 模块
-====================
-
-本文件实现了以下组件：
-
-1. PromptPool
-   - 维护 K 个可被客户端选用的 prompt 上下文向量 (n_ctx, ctx_dim)。
-   - 支持按权重或 Top-m 的方式合成加权 prompt 向量。
-   - 当前实现将 prompt 存为 *buffer*，即默认 **不在服务器端训练**。
-     客户端若使用 LoRA 等方法细化 prompt，可将增量上载，由服务器聚合后
-     更新 `self.prompts`（目前尚未实现聚合逻辑，后续可扩展）。
-
-2. GateNetwork
-   - 一个简单的两层 MLP，将客户端特征摘要 fᵢ → K 维 logits。
-
-3. SparseGateLoss
-   - MoE 中常用的 importance loss，用于鼓励 Gate 的稀疏分配，避免所有
-     权重集中到同一个 prompt。
-
-提示：
-若要支持 PromptPool 的 *联邦更新*（即 pₖ → pₖ′），可以：
-  • 让客户端训练 LoRA ΔA, ΔB（或全量 Δpₖ）；
-  • 回传至服务器后对相应 prompt 做 FedAvg；
-  • 更新后调用 `prompt_pool.prompts.copy_(new_tensor)`。
-
-"""
 import os
 
 import torch
 import torch.nn as nn
 from typing import Optional, List
 
-# 可选：若安装 scikit-learn 可用 KMeans 聚类做初始化
+# You can install it via `pip install scikit-learn`
 try:
     from sklearn.cluster import KMeans
     _HAS_SK = True
@@ -38,14 +12,6 @@ except ImportError:
     _HAS_SK = False
 
 
-# ---------------------------------------------------------------------------
-# PromptPool
-# ---------------------------------------------------------------------------
-#
-# 设计理念：
-#   Server 持有一个大小为 K 的 prompt 池，每个 prompt 为长度 n_ctx 的 token
-#   上下文向量。Client 依据 Gate 输出的权重 w 选择或加权组合 Prompt。
-# ---------------------------------------------------------------------------
 class PromptPool(nn.Module):
     """A pool that stores K prompt context tensors of shape (n_ctx, ctx_dim).
 
@@ -113,15 +79,6 @@ class PromptPool(nn.Module):
 
     @torch.no_grad()
     def get_prompt(self, weights: torch.Tensor, top_m: Optional[int] = None):
-        """Return a weighted prompt given selection probabilities.
-        Args:
-            weights (tensor): shape (K,) after softmax.
-            top_m (int, optional): if specified, only keep the top-m weights,
-                renormalise and combine.
-        Returns:
-            tensor of shape (n_ctx, ctx_dim)
-        """
-        # -------- Top-m 策略（可选） --------
         if top_m is not None and top_m < weights.numel():
             # zero out weights except top-m
             topk = torch.topk(weights, top_m)
@@ -129,17 +86,10 @@ class PromptPool(nn.Module):
             mask[topk.indices] = 1.0
             weights = weights * mask
             weights = weights / weights.sum()
-        # -------- 加权求和得到组合 prompt --------
         ctx = torch.einsum('k,knd->nd', weights, self.prompts)
         return ctx
 
 
-# ---------------------------------------------------------------------------
-# GateNetwork
-# ---------------------------------------------------------------------------
-# 输入：客户端特征摘要向量 fᵢ (dim=d)
-# 输出：对 K 个 prompt 的 logits
-# ---------------------------------------------------------------------------
 class GateNetwork(nn.Module):
     """Simple MLP gate that maps a client feature vector to logits over K prompts."""
 
@@ -157,11 +107,8 @@ class GateNetwork(nn.Module):
         return self.net(x)
 
 
-# ---------------------------------------------------------------------------
-# SparseGateLoss
-# ---------------------------------------------------------------------------
-# 重要性正则：鼓励 Gate 的平均分配向量接近稀疏。
-# ---------------------------------------------------------------------------
+
+# Encourage the gate to have sparse average distribution (similar to MoE).
 class SparseGateLoss(nn.Module):
     """Importance loss to encourage sparse gate activations (similar to MoE)."""
 

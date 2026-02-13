@@ -14,19 +14,10 @@ import statistics
 from torch.utils.data import DataLoader
 from continuum.metrics import Logger
 
-#from clip.MoE_clip import MoE_CLIP
 from continual_clip import utils
 from continual_clip.models import load_model
 from continual_clip.datasets import build_cl_scenarios
 
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
-import numpy as np
-
-
-# --- Utility: Robust checkpoint saving ---
 
 def save_checkpoint(model, cfg, suffix="final"):
     """Save model checkpoint robustly.
@@ -105,16 +96,6 @@ def continual_clip(cfg: DictConfig) -> None:
     # print('train_classes_names', train_classes_names)
     model.classes_names = classes_names
 
-    # --- 调试信息 ---
-    print("-" * 50)
-    print(f"[调试] 场景设置: {cfg.scenario}")
-    if cfg.scenario == "domain":
-        print(f"[调试] 检测到领域增量学习场景。任务总数 (领域数): {len(eval_dataset)}")
-    else:
-        print(f"[调试] 检测到类增量学习场景。任务总数: {len(eval_dataset)}")
-    print(f"[调试] 类别总数: {len(classes_names)}")
-    print("-" * 50)
-    # --- 调试信息结束 ---
 
     with open(cfg.log_path, 'w+') as f: 
         pass
@@ -163,9 +144,6 @@ def continual_clip(cfg: DictConfig) -> None:
             # For DIL, evaluate on each seen domain individually and average the results.
             domain_accuracies = []
             for i in range(task_id + 1):
-                # --- 调试信息 ---
-                print(f"--> [调试] 正在评估已见领域 (任务) {i}")
-                # --- 调试信息结束 ---
                 domain_loader = DataLoader(eval_dataset[i], batch_size=cfg.batch_size, shuffle=False, num_workers=8)
                 
                 domain_correct = 0
@@ -193,7 +171,7 @@ def continual_clip(cfg: DictConfig) -> None:
                 }) + '\n')
         else:
             raise ValueError(f"Unsupported scenario for evaluation: {cfg.scenario}")
-        
+
     with open(cfg.log_path, 'a+') as f:
         if acc_list:
             f.write(json.dumps({
@@ -207,12 +185,6 @@ def continual_clip(cfg: DictConfig) -> None:
                 'avg': 0,
                 'error': 'acc_list is empty at the end of evaluation.'
             }) + '\n')
-            
-    # ---------- Training loop finished, save final model checkpoint ----------
-    #save_checkpoint(model, cfg, suffix="final")
-        
-
-
 
 if __name__ == "__main__":
     continual_clip()
