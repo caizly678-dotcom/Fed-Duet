@@ -1,6 +1,6 @@
 # Fed-Duet: Dual Expert-Orchestrated Framework for Continual Federated Vision-Language Learning
 
-> **Note:** This repository contains the code to reproduce the experiments in our paper. The core model architecture has been omitted and will be released upon the paper's official acceptance.
+
 
 This is the official PyTorch implementation for the paper **"Fed-Duet: Dual Expert-Orchestrated Framework for Continual Federated Vision-Language Learning"**.
 
