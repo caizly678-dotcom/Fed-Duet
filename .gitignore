@@ -1,0 +1,15 @@
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 环境与日志
+.env
+logs/
+*.log
+
+# 模型与数据（如果是科研项目，这些通常很大，不建议传）
+*.pth
+*.h5
+data/
