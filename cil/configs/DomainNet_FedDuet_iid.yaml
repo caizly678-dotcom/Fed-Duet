@@ -1,0 +1,47 @@
+hydra:
+  run:
+    dir: ./experiments/FedDuet/${scenario}/${dataset}_${method}-${com}-iid
+  job:
+    chdir: true
+
+  job_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '%(message)s'
+
+class_order: ""
+dataset_root: ""
+workdir: ""
+log_path: "metrics.json"
+model_name: "ViT-B/16"
+prompt_template: "a bad photo of a {}."
+
+compress: False
+
+batch_size: 16
+scenario: "domain"
+dataset: "DomainNet"
+lr: 3e-4
+
+method: "DomainNet_FedDuet_iid"
+use_FedDuet: True
+
+federated: True
+iid: True
+num_clients: 5
+com: 10
+client_epochs: 1
+use_MoE_Adapters: True
+fp16: True
+
+mixed_precision: fp16
+
+device: "cuda"
+gpu: 0
+seed: 42
+
+num_experts: 8
+n_shared_experts: 1
+top_k: 2
+use_mlp: True

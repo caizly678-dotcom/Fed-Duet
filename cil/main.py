@@ -2,6 +2,7 @@ import copy
 import os
 import json
 from copy import deepcopy
+from pathlib import Path
 
 import hydra
 import logging
@@ -19,57 +20,21 @@ from continual_clip.models import load_model
 from continual_clip.datasets import build_cl_scenarios
 
 
-def save_checkpoint(model, cfg, suffix="final"):
-    """Save model checkpoint robustly.
-
-    Args:
-        model (torch.nn.Module): trained model to save.
-        cfg (DictConfig): experiment configuration.
-        suffix (str): filename suffix, e.g., 'final' or 'epoch_1'.
-    Returns:
-        str: path to the saved checkpoint.
-    """
-    try:
-        # Prefer cfg.workdir if valid, else fallback to current directory.
-        base_dir = getattr(cfg, "workdir", None)
-        if not base_dir or not os.path.isdir(base_dir):
-            logging.warning(f"cfg.workdir '{base_dir}' is invalid or does not exist. Saving checkpoint to current directory.")
-            base_dir = os.getcwd()
-
-        checkpoint_dir = os.path.join(base_dir, "checkpoints")
-        os.makedirs(checkpoint_dir, exist_ok=True)
-
-        ckpt_path = os.path.join(checkpoint_dir, f"{cfg.method}_{suffix}.pth")
-        torch.save(
-            {
-                "model_state_dict": model.state_dict(),
-                "config": OmegaConf.to_container(cfg, resolve=True),
-            },
-            ckpt_path,
-        )
-        print(f"Model checkpoint saved to {ckpt_path}")
-        return ckpt_path
-    except Exception as e:
-        logging.exception("Failed to save model checkpoint.")
-        return ""
-
-
 @hydra.main(config_path=None, config_name=None, version_base="1.1")
 def continual_clip(cfg: DictConfig) -> None:
-    """Continual-CLIP entry point.
-    
-    Args:
-        cfg (DictConfig): CIL experiment configuration.
-    """
-    cfg.workdir = utils.get_workdir(path=os.getcwd())
-    cfg.dataset_root = os.path.join(cfg.workdir, cfg.dataset_root)
+    cfg.workdir = str(Path(__file__).resolve().parent)   # cil 目录
+
+    if not cfg.dataset_root:
+        raise ValueError("dataset_root 不能为空，请传 dataset_root=../data")
+
+    if not os.path.isabs(cfg.dataset_root):
+        cfg.dataset_root = os.path.join(cfg.workdir, cfg.dataset_root)
 
     utils.set_seed(cfg.seed)
-    # class_order is only used in class-incremental scenarios
+
     if cfg.scenario == "class":
         cfg.class_order = utils.get_class_order(os.path.join(cfg.workdir, cfg.class_order))
     else:
-        # For other scenarios like domain-incremental, class_order is not needed.
         cfg.class_order = None
 
 

@@ -63,7 +63,7 @@ class PromptLearner(nn.Module):
 
     def __init__(self, cfg, classnames, clip_model, prev_ctx=None):
         super().__init__()
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = clip_model.token_embedding.weight.device if hasattr(clip_model, "token_embedding") else next(clip_model.parameters()).device
 
         n_cls = len(classnames)
         n_ctx = getattr(cfg, "N_CTX", 16)
@@ -75,7 +75,7 @@ class PromptLearner(nn.Module):
         ctx_dim = clip_model.ln_final.weight.shape[0]
 
         if prev_ctx is not None:
-            ctx_vectors = prev_ctx.to(torch.float32)
+            ctx_vectors = prev_ctx.to(device=device, dtype=torch.float32)
             prompt_prefix = " ".join(["X"] * n_ctx)
         elif ctx_init:
             ctx_init = ctx_init.replace("_", " ")
@@ -109,7 +109,7 @@ class PromptLearner(nn.Module):
 
         self.n_cls = n_cls
         self.n_ctx = n_ctx
-        self.tokenized_prompts = tokenized_prompts
+        self.register_buffer("tokenized_prompts", tokenized_prompts)
         self.name_lens = name_lens
         self.class_token_position = class_token_position
 
@@ -250,7 +250,7 @@ class CustomCLIP(nn.Module):
 
             # compute nonlocal text features
             with torch.no_grad():
-                text_output = self.text_encoder(self.prompt_learner(), self.tokenized_prompts)
+                text_output = self.text_encoder(self.prompt_learner(), self.prompt_learner.tokenized_prompts)
                 text_features = text_output if isinstance(text_output, torch.Tensor) else text_output[0]
 
                 text_features = text_features / text_features.norm(dim=-1, keepdim=True)
@@ -271,8 +271,8 @@ class CustomCLIP(nn.Module):
         if new_classnames is None:
             new_classnames = self.classnames
 
-
-        self.prompt_learner = PromptLearner(self.cfg, new_classnames, self.clip_model, prev_ctx)
+        model_device = self.clip_model.token_embedding.weight.device if hasattr(self.clip_model, "token_embedding") else next(self.clip_model.parameters()).device
+        self.prompt_learner = PromptLearner(self.cfg, new_classnames, self.clip_model, prev_ctx).to(model_device)
         self.classnames = new_classnames
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
 
@@ -300,7 +300,7 @@ class CustomCLIP(nn.Module):
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)  # (B, D)
 
         local_prompts = self.prompt_learner()
-        tokenized = self.tokenized_prompts
+        tokenized = self.prompt_learner.tokenized_prompts
         
         text_batch_size = getattr(self.cfg, "text_batch_size", 256)
         num_prompts = local_prompts.shape[0]
@@ -388,7 +388,7 @@ class FedDuetTrainer:
         if hasattr(cfg, "device"):
             self.device = cfg.device if isinstance(cfg.device, torch.device) else torch.device(cfg.device)
         else:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = clip_model.token_embedding.weight.device if hasattr(clip_model, "token_embedding") else next(clip_model.parameters()).device
 
         self.global_model.to(torch.device("cpu"))
         self.client_model.to(self.device)
@@ -761,7 +761,7 @@ class FedDuetTrainer:
     def evaluate_clients(self):
 
         from torch.utils.data import ConcatDataset, Subset
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = self.device if isinstance(self.device, torch.device) else torch.device(self.device)
         client_accs = []
 
         if self.classes_names is not None:

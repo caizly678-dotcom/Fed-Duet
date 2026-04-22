@@ -257,7 +257,7 @@ class DomainIncremental(nn.Module):
         self.model.train()
         if cfg.federated:
             print("----------------federated learning----------------")
-            if cfg.use_fedDuet:
+            if cfg.use_FedDuet:
                 print("using fedduet")
                 global_model = self.model
                 client_model = copy.deepcopy(self.model)
