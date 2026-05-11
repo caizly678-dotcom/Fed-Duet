@@ -170,6 +170,7 @@ class ClassIncremental(nn.Module):
                 else:
                     raise ValueError(f"Unsupported federated method in this refactored version. Only 'FedDuet' is supported.")
 
+                self.model = self.model.to(self.device)
 
         self.model.eval()
 
