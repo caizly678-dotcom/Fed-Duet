@@ -25,7 +25,7 @@ def continual_clip(cfg: DictConfig) -> None:
     cfg.workdir = str(Path(__file__).resolve().parent)   # cil 目录
 
     if not cfg.dataset_root:
-        raise ValueError("dataset_root 不能为空，请传 dataset_root=../data")
+        raise ValueError("dataset_root 不能为空，请传 dataset_root=/workspace/Fed-Duet/data")
 
     if not os.path.isabs(cfg.dataset_root):
         cfg.dataset_root = os.path.join(cfg.workdir, cfg.dataset_root)
@@ -44,10 +44,6 @@ def continual_clip(cfg: DictConfig) -> None:
 
     model  = load_model(cfg, device)
     print("Get model")
-
-
-    initial_model = deepcopy(model)
-    initial_model.eval()
 
 
     eval_dataset, classes_names = build_cl_scenarios(

@@ -5,7 +5,7 @@ log_path: metrics.json
 model_name: ViT-B/16
 prompt_template: a bad photo of a {}.
 compress: false
-batch_size: 16
+batch_size: 4
 increment: ${initial_increment}
 initial_increment: 10
 scenario: class
@@ -29,3 +29,4 @@ num_experts: 8
 n_shared_experts: 1
 top_k: 2
 use_mlp: true
+gradient_accumulation_steps: 2

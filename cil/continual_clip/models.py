@@ -43,11 +43,13 @@ class ClassIncremental(nn.Module):
 
 
     def forward(self, image, text=None, task_id=0, is_train=False):
+        model_device = next(self.model.parameters()).device
+        image = image.to(model_device)
+
         if text is None:
             with torch.no_grad():
-                    logits_per_image, aux_loss = self.model(image, None, task_id, is_train=False)
-                    # 这里的probs需要处理连续学习中的类别偏移
-                    probs = logits_per_image.softmax(dim=-1)
+                logits_per_image, aux_loss = self.model(image, None, task_id, is_train=False)
+                probs = logits_per_image.softmax(dim=-1)
         else:
             with torch.no_grad():
                 logits_per_image, _ = self.model(image, text, 0, is_train=False)
@@ -100,7 +102,9 @@ class ClassIncremental(nn.Module):
         total_iterations = EPOCH * num_batches
 
         # move model to device
-        self.model = self.model.cuda()
+        self.model = self.model.to("cpu")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         devices = list(range(torch.cuda.device_count()))
         # print("Using devices", devices)
 
@@ -129,7 +133,7 @@ class ClassIncremental(nn.Module):
                 # 调用 FedDuet 训练
                 print("using FedDuet")
                 global_model = self.model
-                client_model = copy.deepcopy(self.model)
+                client_model = self.model
                 current_classnames = self.get_task_classes(task_id)
 
                 result = fedduet_train(
@@ -172,6 +176,7 @@ class ClassIncremental(nn.Module):
 
                 self.model = self.model.to(self.device)
 
+        self.model = self.model.to(self.device)
         self.model.eval()
 
 
@@ -201,10 +206,13 @@ class DomainIncremental(nn.Module):
         self.shared_state = {}
 
     def forward(self, image, text=None, task_id=0, is_train=False):
+        model_device = next(self.model.parameters()).device
+        image = image.to(model_device)
+
         if text is None:
             with torch.no_grad():
-                    logits_per_image, aux_loss = self.model(image, None, task_id, is_train=False)
-                    probs = logits_per_image.softmax(dim=-1)
+                logits_per_image, aux_loss = self.model(image, None, task_id, is_train=False)
+                probs = logits_per_image.softmax(dim=-1)
         else:
             with torch.no_grad():
                 logits_per_image, _ = self.model(image, text, 0, is_train=False)
@@ -245,7 +253,9 @@ class DomainIncremental(nn.Module):
         num_batches = len(train_loader)
         total_iterations = EPOCH * num_batches
 
-        self.model = self.model.cuda()
+        self.model = self.model.to("cpu")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         # text
         # For Domain-IL, we use all class names for all tasks.
@@ -261,7 +271,7 @@ class DomainIncremental(nn.Module):
             if cfg.use_FedDuet:
                 print("using fedduet")
                 global_model = self.model
-                client_model = copy.deepcopy(self.model)
+                client_model = self.model
                 current_classnames = self.classes_names
                 result = fedduet_train(
                     global_model=global_model,
@@ -299,6 +309,7 @@ class DomainIncremental(nn.Module):
 
 
 
+        self.model = self.model.to(self.device)
         self.model.eval()
 
 def load_model(cfg: DictConfig, device: torch.device) -> nn.Module:

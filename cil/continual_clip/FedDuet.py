@@ -388,7 +388,7 @@ class FedDuetTrainer:
         if hasattr(cfg, "device"):
             self.device = cfg.device if isinstance(cfg.device, torch.device) else torch.device(cfg.device)
         else:
-            self.device = clip_model.token_embedding.weight.device if hasattr(clip_model, "token_embedding") else next(clip_model.parameters()).device
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.global_model.to(torch.device("cpu"))
         self.client_model.to(self.device)
@@ -655,9 +655,8 @@ class FedDuetTrainer:
             for client_id, client_loader in enumerate(self.clients_loaders):
                 print(f"\n---Client  {client_id + 1}/{len(self.clients_loaders)} Training ---")
 
-                global_state_on_device = {k: v.to(self.device) for k, v in self.global_model.state_dict().items()}
-                self.client_model.load_state_dict(global_state_on_device, strict=False)
-
+                self.client_model.load_state_dict(self.global_model.state_dict(), strict=False)
+                
                 indices = random.sample(range(self.prompt_pool_size), self.num_experts_per_client)
                 expert_ctx_list = [self.prompt_pool.prompts[idx].to(self.device) for idx in indices]
                 # print(f"[Server] Round {global_round} | Client {client_id} 分配专家索引: {indices}")
@@ -711,6 +710,8 @@ class FedDuetTrainer:
                     if any(k in n for k in personalized_keywords)
                 }
                 self.final_client_states[client_id] = final_p_state
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
 
             global_state = self.global_model.state_dict()
