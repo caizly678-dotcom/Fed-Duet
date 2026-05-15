@@ -32,12 +32,24 @@ def continual_clip(cfg: DictConfig) -> None:
 
     utils.set_seed(cfg.seed)
 
+
+
     if cfg.scenario == "class":
         cfg.class_order = utils.get_class_order(os.path.join(cfg.workdir, cfg.class_order))
     else:
         cfg.class_order = None
 
+    # 统一使用 jsonl 作为逐行日志格式
+    if not getattr(cfg, "log_path", None):
+        cfg.log_path = "metrics.jsonl"
+    elif cfg.log_path.endswith(".json"):
+        cfg.log_path = cfg.log_path[:-5] + ".jsonl"
 
+    # 统一使用 jsonl 作为逐行日志格式
+    if not getattr(cfg, "log_path", None):
+        cfg.log_path = "metrics.jsonl"
+    elif cfg.log_path.endswith(".json"):
+        cfg.log_path = cfg.log_path[:-5] + ".jsonl"
 
     utils.save_config(cfg)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

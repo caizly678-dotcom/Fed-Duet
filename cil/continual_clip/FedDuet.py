@@ -547,10 +547,9 @@ class FedDuetTrainer:
 
         trainable_params = [p for p in self.client_model.parameters() if p.requires_grad]
 
-        optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.Adam(
             trainable_params,
             lr=self.cfg.lr,
-            weight_decay=getattr(self.cfg, "weight_decay", 0.01)
         )
         scaler = torch.cuda.amp.GradScaler()
 

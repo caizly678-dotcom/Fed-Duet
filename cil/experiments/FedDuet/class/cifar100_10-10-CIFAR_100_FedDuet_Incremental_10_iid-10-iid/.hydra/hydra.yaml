@@ -114,11 +114,10 @@ hydra:
     task:
     - dataset_root=../data
     - class_order=class_orders/cifar100.yaml
-    - batch_size=4
   job:
     name: main
     chdir: true
-    override_dirname: batch_size=4,class_order=class_orders/cifar100.yaml,dataset_root=../data
+    override_dirname: class_order=class_orders/cifar100.yaml,dataset_root=../data
     id: ???
     num: ???
     config_name: CIFAR_100_FedDuet_Incremental_10_iid

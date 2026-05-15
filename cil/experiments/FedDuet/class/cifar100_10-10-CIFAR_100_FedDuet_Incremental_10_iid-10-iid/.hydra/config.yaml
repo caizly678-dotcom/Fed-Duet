@@ -1,17 +1,17 @@
 class_order: class_orders/cifar100.yaml
 dataset_root: ../data
 workdir: ''
-log_path: metrics.json
+log_path: metrics.jsonl
 model_name: ViT-B/16
 prompt_template: a bad photo of a {}.
 compress: false
-batch_size: 4
+batch_size: 16
 increment: ${initial_increment}
 initial_increment: 10
 scenario: class
 dataset: cifar100
 class_num: 100
-lr: 0.0003
+lr: 3.0e-05
 method: CIFAR_100_FedDuet_Incremental_10_iid
 use_FedDuet: true
 federated: true
