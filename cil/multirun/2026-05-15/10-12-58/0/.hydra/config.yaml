@@ -24,7 +24,7 @@ fp16: true
 mixed_precision: fp16
 device: cuda
 gpu: 1
-seed: 42 2005 2026
+seed: 42
 num_experts: 8
 n_shared_experts: 1
 top_k: 2
